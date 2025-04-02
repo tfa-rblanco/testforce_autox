@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Roboto+Slab:wght@400;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Roboto Slab', sans-serif;
+  line-height: 1.5;
+  color: #ebe7ef;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: radial-gradient(circle at top, rgba(228, 222, 195, 0.98), rgba(169, 206, 134, 0.87));
+  background-repeat: repeat;
+  background-size: 100% 100%, 30% 30%, 100% 100%;
+  min-height: 110rem;
+}
+
+header {
+  text-align: center;
+}
+
+header img {
+  width: 12rem;
+  object-fit: contain;
+  margin: 1rem auto 1rem auto;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.4));
+}
+
+h1 {
+  font-family: 'Caprasimo', cursive;
+  font-size: 3rem;
+  margin: 0 auto 3rem auto;
+  color: #000000;
+}
+
+h2 {
+  font-family: 'Caprasimo', cursive;
+  font-size: 3rem;
+  margin: 0 auto 3rem auto;
+  color: #ffffff;
+}
+
+#scenario-builder {
+  max-width: 65rem;
+  margin: 3rem auto;
+  padding: 2rem;
+  border-radius: 6px;
+  background: linear-gradient(#383624, #282617);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#scenario-builder ul,
+#scenario-builder ul li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ul li {
+  list-style-type: none !important;
+  margin: 0;
+  padding: 0;
+}
+
+#scenario-builder li label {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+  gap: 10px;
+  cursor: pointer;
+}
+
+#scenario-builder input[type="radio"] {
+  appearance: radio;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  cursor: pointer;
+  accent-color: #3498db;
+}
+
+#scenario-builder li input[type="radio"]:checked + span {
+  font-weight: bold;
+  color: #fff;
+  background-color: #2d2d2d;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+#test-steps {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+.test-steps-container {
+  display: inline-flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.multiline-label {
+  display: block;
+  width: 100%;
+  max-width: 23rem;
+  margin: 0 auto;
+  text-align: center;
+  line-height: 1.5;
+}
+
+button,
+.centered-button,
+.bottom-button {
+  appearance: none;
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+button:focus,
+.centered-button:focus,
+.bottom-button:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  outline: none;
+}
+
+button:hover,
+.centered-button:hover,
+.bottom-button:hover {
+  background-color: #e0e0e0;
+}
+
+.bottom-button {
+  align-self: center;
+  margin-top: 1rem;
+}
+
+.button-inline {
+  display: inline-block;
+  width: 120px;
+  padding: 6px 12px;
+  margin-right: 10px;
+  font-size: 14px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button-inline:hover {
+  background-color: #eee;
+}
+
+select {
+  appearance: none;
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  outline: none;
+}
+
+input {
+  appearance: none;
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  color: #333;
+  cursor: text;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  outline: none;
+}

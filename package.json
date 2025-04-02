@@ -1,0 +1,38 @@
+{
+  "name": "testforce_autox",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "test": "playwright test",
+    "allure:report": "allure generate allure-results --clean -o allure-report"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "react": "^19.0.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-dom": "^19.0.0",
+    "react-essentials-deep-dive-adv": "file:",
+    "testforce_autox": "file:",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "allure-commandline": "^2.33.0",
+    "allure-playwright": "^3.2.1",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "express": "^4.21.2",
+    "vite": "^4.4.5"
+  }
+}
