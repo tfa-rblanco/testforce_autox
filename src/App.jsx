@@ -2,11 +2,60 @@ import { useState, useRef } from "react";
 import TestSteps from "./components/TestSteps";
 import axios from "axios";
 import ElementInspector from "./components/ElementInspector";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { saveStepsToFile, loadStepsFromFile } from "./utils/testFlowStorage";
+
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const initialSteps = [];
 
+function SortableStep({ step, index, selectedIndex, setSelectedIndex }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: index });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    background: isDragging ? "#555" : "transparent",
+    padding: "2px",
+    borderRadius: "1px",
+    marginBottom: "1px",
+    cursor: "grab",
+  };
+
+  return (
+    <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+        <input
+          type="radio"
+          name="selectedStep"
+          value={index}
+          checked={selectedIndex === index}
+          onChange={() => setSelectedIndex(index)}
+        />
+        <span><strong>Step {index + 1}:</strong> {step.action} on {step.selector || step.url}</span>
+      </label>
+    </li>
+  );
+}
 
 function App() {
   const [stepsList, setStepsList] = useState(initialSteps);
@@ -17,6 +66,10 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [inspectUrl, setInspectUrl] = useState("");
   const fileInputRef = useRef();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor)
+  );
 
   function addOrUpdateStep(step) {
     const updatedSteps = [...stepsList];
@@ -74,14 +127,13 @@ function App() {
     setShowInspector((prev) => !prev);
   };
 
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-
-    const items = Array.from(stepsList);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    setStepsList(items);
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = active.id;
+      const newIndex = over.id;
+      setStepsList((steps) => arrayMove(steps, oldIndex, newIndex));
+    }
   };
 
   return (
@@ -107,53 +159,30 @@ function App() {
             <button onClick={deleteSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: "10px" }}>Delete</button>
           </div>
 
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="steps">
-              {(provided) => (
-                <ul {...provided.droppableProps} ref={provided.innerRef} style={{ listStyle: "none", padding: 0 }}>
-                  {stepsList.map((step, index) => (
-                    <Draggable key={index} draggableId={`step-${index}`} index={index}>
-                      {(provided, snapshot) => (
-                        <li
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={{
-                            background: snapshot.isDragging ? "#555" : "transparent",
-                            padding: "2px",
-                            borderRadius: "1px",
-                            marginBottom: "1px",
-                            ...provided.draggableProps.style
-                          }}
-                        >
-                          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-                            <input
-                              type="radio"
-                              name="selectedStep"
-                              value={index}
-                              checked={selectedIndex === index}
-                              onChange={() => setSelectedIndex(index)}
-                            />
-                            <span><strong>Step {index + 1}:</strong> {step.action} on {step.selector || step.url}</span>
-                          </label>
-                        </li>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </ul>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={stepsList.map((_, i) => i)} strategy={verticalListSortingStrategy}>
+              <ul style={{ listStyle: "none", padding: 0 }}>
+                {stepsList.map((step, index) => (
+                  <SortableStep
+                    key={index}
+                    index={index}
+                    step={step}
+                    selectedIndex={selectedIndex}
+                    setSelectedIndex={setSelectedIndex}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+
           <input
-              type="file"
-              accept=".json"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={(e) => loadStepsFromFile(e, setStepsList, setExecutionResults)}
+            type="file"
+            accept=".json"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={(e) => loadStepsFromFile(e, setStepsList, setExecutionResults)}
           />
         </div>
-        
       )}
 
       {executionResults.length > 0 && (
@@ -176,24 +205,23 @@ function App() {
 
       <div id="scenario-builder">
         <div style={{ marginBottom: "1rem" }}>
-            <label htmlFor="inspect-url" style={{ marginRight: "8px" }}>
-              URL to inspect:
-            </label>
-            <input
-              id="inspect-url"
-              value={inspectUrl}
-              onChange={(e) => setInspectUrl(e.target.value)}
-              placeholder="https://example.com"
-              style={{ marginRight: "8px", padding: "6px", width: "300px" }}
-            />
-            <button onClick={launchInspectableBrowser} style={{ marginLeft: "10px" }}>Launch</button>
-            <button onClick={toggleInspector} style={{ marginLeft: "10px" }}>
-              {showInspector ? "Hide Inspector" : "Show Inspector"}
-            </button>
-          </div>
+          <label htmlFor="inspect-url" style={{ marginRight: "8px" }}>
+            URL to inspect:
+          </label>
+          <input
+            id="inspect-url"
+            value={inspectUrl}
+            onChange={(e) => setInspectUrl(e.target.value)}
+            placeholder="https://example.com"
+            style={{ marginRight: "8px", padding: "6px", width: "300px" }}
+          />
+          <button onClick={launchInspectableBrowser} style={{ marginLeft: "10px" }}>Launch</button>
+          <button onClick={toggleInspector} style={{ marginLeft: "10px" }}>
+            {showInspector ? "Hide Inspector" : "Show Inspector"}
+          </button>
+        </div>
 
-          
-          {showInspector && <ElementInspector />}
+        {showInspector && <ElementInspector />}
       </div>
     </>
   );
