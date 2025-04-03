@@ -1,14 +1,26 @@
 import { chromium, expect } from '@playwright/test';
+import fs from 'fs';
+
+
 
 class PlaywrightExecutor {
   constructor(workflow) {
     this.workflow = workflow;
   }
 
+
+
+
   async run() {
+    const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+
+    const headless = config.headless === true;
+    console.log(headless)
     const results = [];
-    const browser = await chromium.launch({ headless: false });
+    const browser = await chromium.launch({ headless: headless });  // how to make this dynamically value headless: true
     const page = await browser.newPage();
+
+
 
     for (const step of this.workflow.steps) {
       const result = { ...step, status: 'pending', message: '' };
