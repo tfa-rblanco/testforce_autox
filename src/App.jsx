@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { Checkbox } from "antd";
 import TestSteps from "./components/TestSteps";
 import axios from "axios";
 import ElementInspector from "./components/ElementInspector";
@@ -57,7 +58,10 @@ function SortableStep({ step, index, selectedIndex, setSelectedIndex }) {
   );
 }
 
+
+
 function App() {
+    const [headless, setHeadless] = useState(false); // Default value is false
   const [stepsList, setStepsList] = useState(initialSteps);
   const [executionResults, setExecutionResults] = useState([]);
   const [showInspector, setShowInspector] = useState(false);
@@ -104,7 +108,8 @@ function App() {
 
   const executeWorkflow = async () => {
     try {
-      const res = await axios.post("http://localhost:3000/execute", { steps: stepsList });
+
+      const res = await axios.post(`http://localhost:4000/execute?headless=${headless}`, { steps: stepsList });
       setExecutionResults(res.data.results || []);
       alert("Workflow executed!");
     } catch (error) {
@@ -114,7 +119,7 @@ function App() {
 
   const launchInspectableBrowser = async () => {
     try {
-      await axios.post("http://localhost:3000/launch-browser", {
+      await axios.post("http://localhost:4000/launch-browser", {
         url: inspectUrl,
       });
       alert("Inspectable browser launched!");
@@ -136,17 +141,39 @@ function App() {
     }
   };
 
+
+  const handleHeadLessCheckboxChange = (event) => {
+    setHeadless(event.target.checked); // Update the headless state based on checkbox
+  };
+
+
+
   return (
     <>
-      <div id="scenario-builder">
-        <h2>Testing Scenario Builder</h2>
-        <TestSteps
-          onAddStep={addOrUpdateStep}
-          prefill={prefillData}
-          isEditing={editingIndex !== null}
-        />
-        <button className="bottom-button" onClick={executeWorkflow}>Execute</button>
-      </div>
+
+
+
+     <div id="scenario-builder" >
+       <h2>Testing Scenario Builder</h2>
+
+
+
+       <TestSteps
+         onAddStep={addOrUpdateStep}
+         prefill={prefillData}
+         isEditing={editingIndex !== null}
+       />
+
+
+        <Checkbox checked={headless} onChange={handleHeadLessCheckboxChange} style={{ color: 'white' }}>
+                Headless
+              </Checkbox>
+
+       <button className="bottom-button" onClick={executeWorkflow} style={{ marginTop: '10px' }}>
+         Execute
+       </button>
+     </div>
+
 
       {stepsList.length > 0 && (
         <div id="scenario-builder">
