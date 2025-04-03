@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Checkbox } from "antd";
+import { Checkbox,Spin } from "antd";
 import TestSteps from "./components/TestSteps";
 import axios from "axios";
 import ElementInspector from "./components/ElementInspector";
@@ -61,7 +61,7 @@ function SortableStep({ step, index, selectedIndex, setSelectedIndex }) {
 
 
 function App() {
-    const [headless, setHeadless] = useState(false); // Default value is false
+    const [headless, setHeadless] = useState(false); 
   const [stepsList, setStepsList] = useState(initialSteps);
   const [executionResults, setExecutionResults] = useState([]);
   const [showInspector, setShowInspector] = useState(false);
@@ -70,6 +70,7 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [inspectUrl, setInspectUrl] = useState("");
   const fileInputRef = useRef();
+  const [loading, setLoading] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor)
@@ -108,12 +109,13 @@ function App() {
 
   const executeWorkflow = async () => {
     try {
-
+      setLoading(true); // Show the spinner
       const res = await axios.post(`http://localhost:4000/execute?headless=${headless}`, { steps: stepsList });
-      setExecutionResults(res.data.results || []);
-      alert("Workflow executed!");
+      setExecutionResults(res.data.results || []);     
     } catch (error) {
       console.error("Execution failed:", error);
+    } finally {
+      setLoading(false); // Hide the spinner once done
     }
   };
 
@@ -150,45 +152,38 @@ function App() {
 
   return (
     <>
-
-
-
-     <div id="scenario-builder" >
-       <h2>Testing Scenario Builder</h2>
-
-
-
-       <TestSteps
-         onAddStep={addOrUpdateStep}
-         prefill={prefillData}
-         isEditing={editingIndex !== null}
-       />
-
-
+      <div id="scenario-builder">
+        <h2>Testing Scenario Builder</h2>
+  
+        <TestSteps
+          onAddStep={addOrUpdateStep}
+          prefill={prefillData}
+          isEditing={editingIndex !== null}
+        />
+  
         <Checkbox checked={headless} onChange={handleHeadLessCheckboxChange} style={{ color: 'white' }}>
-                Headless
-              </Checkbox>
-
-       <button className="bottom-button" onClick={executeWorkflow} style={{ marginTop: '10px' }}>
-         Execute
-       </button>
-     </div>
-
-
+          Headless
+        </Checkbox>
+  
+        <button className="bottom-button" onClick={executeWorkflow} style={{ marginTop: '10px' }}>
+          Execute
+        </button>
+      </div>
+  
       {stepsList.length > 0 && (
         <div id="scenario-builder">
           <h3>Test Execution Flow</h3>
-
-          <div style={{ marginBottom: "10px" }}>
-            <button onClick={() => saveStepsToFile(stepsList)} style={{ marginLeft: "10px" }}>Save Steps</button>
-            <button onClick={() => fileInputRef.current.click()} style={{ marginLeft: "10px" }}>Load Steps</button>
-            <button onClick={editSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: "10px" }}>Edit</button>
-            <button onClick={deleteSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: "10px" }}>Delete</button>
+  
+          <div style={{ marginBottom: '10px' }}>
+            <button onClick={() => saveStepsToFile(stepsList)} style={{ marginLeft: '10px' }}>Save Steps</button>
+            <button onClick={() => fileInputRef.current.click()} style={{ marginLeft: '10px' }}>Load Steps</button>
+            <button onClick={editSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: '10px' }}>Edit</button>
+            <button onClick={deleteSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: '10px' }}>Delete</button>
           </div>
-
+  
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={stepsList.map((_, i) => i)} strategy={verticalListSortingStrategy}>
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
                 {stepsList.map((step, index) => (
                   <SortableStep
                     key={index}
@@ -201,26 +196,43 @@ function App() {
               </ul>
             </SortableContext>
           </DndContext>
-
+  
           <input
             type="file"
             accept=".json"
             ref={fileInputRef}
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
             onChange={(e) => loadStepsFromFile(e, setStepsList, setExecutionResults)}
           />
         </div>
       )}
-
+  
+      {loading && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0, 0, 0, 0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999
+        }}>
+          <Spin size="large" tip="Executing workflow..." />
+        </div>
+      )}
+  
       {executionResults.length > 0 && (
         <div id="scenario-builder">
           <h3>Execution Results</h3>
           <ul>
             {executionResults.map((res, idx) => (
-              <li key={idx} style={{ color: res.status === "passed" ? "green" : "red", marginBottom: "8px" }}>
+              <li key={idx} style={{ color: res.status === 'passed' ? 'green' : 'red', marginBottom: '8px' }}>
                 <strong>Step {idx + 1}:</strong> {res.action} on {res.selector || res.url} - <em>{res.status}</em>
                 {res.message && (
-                  <div style={{ color: "gray", fontSize: "0.9em" }}>
+                  <div style={{ color: 'gray', fontSize: '0.9em' }}>
                     ⚠️ <i>{res.message}</i>
                   </div>
                 )}
@@ -229,10 +241,10 @@ function App() {
           </ul>
         </div>
       )}
-
+  
       <div id="scenario-builder">
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="inspect-url" style={{ marginRight: "8px" }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="inspect-url" style={{ marginRight: '8px' }}>
             URL to inspect:
           </label>
           <input
@@ -240,18 +252,20 @@ function App() {
             value={inspectUrl}
             onChange={(e) => setInspectUrl(e.target.value)}
             placeholder="https://example.com"
-            style={{ marginRight: "8px", padding: "6px", width: "300px" }}
+            style={{ marginRight: '8px', padding: '6px', width: '300px' }}
           />
-          <button onClick={launchInspectableBrowser} style={{ marginLeft: "10px" }}>Launch</button>
-          <button onClick={toggleInspector} style={{ marginLeft: "10px" }}>
-            {showInspector ? "Hide Inspector" : "Show Inspector"}
+          <button onClick={launchInspectableBrowser} style={{ marginLeft: '10px' }}>Launch</button>
+          <button onClick={toggleInspector} style={{ marginLeft: '10px' }}>
+            {showInspector ? 'Hide Inspector' : 'Show Inspector'}
           </button>
         </div>
-
+  
         {showInspector && <ElementInspector />}
       </div>
     </>
   );
+  
+  
 }
 
 export default App;
