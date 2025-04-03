@@ -109,6 +109,7 @@ function App() {
 
   const executeWorkflow = async () => {
     try {
+      setExecutionResults([]);  // Clear previous results
       setLoading(true); // Show the spinner
       const res = await axios.post(`http://localhost:4000/execute?headless=${headless}`, { steps: stepsList });
       setExecutionResults(res.data.results || []);     
@@ -152,7 +153,7 @@ function App() {
 
   return (
     <>
-      <div id="scenario-builder">
+      <div id="scenario-builder" style={{alignItems:"center"}}>
         <h2>Testing Scenario Builder</h2>
   
         <TestSteps
@@ -161,7 +162,7 @@ function App() {
           isEditing={editingIndex !== null}
         />
   
-        <Checkbox checked={headless} onChange={handleHeadLessCheckboxChange} style={{ color: 'white' }}>
+        <Checkbox checked={headless} onChange={handleHeadLessCheckboxChange} style={{ color: 'white', width: "80px", marginTop: "20px" }}>
           Headless
         </Checkbox>
   
