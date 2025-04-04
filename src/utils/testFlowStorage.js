@@ -11,6 +11,7 @@ export function saveStepsToFile(stepsList, fileName = "test-steps.json") {
   }
   
   export function loadStepsFromFile(event, setStepsList, setExecutionResults) {
+    setExecutionResults([]);
     const file = event.target.files[0];
     if (!file) return;
   

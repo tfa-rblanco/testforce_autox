@@ -25,4 +25,4 @@ wss.on("connection", (ws) => {
   ws.on("close", () => console.log("Client disconnected"));
 });
 
-console.log("WebSocket server running on ws://localhost:8000");
+console.log("WebSocket server running on port 8000");
