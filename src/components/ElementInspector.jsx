@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
+import config from "../config.js";
 
 const createWebSocket = (setWs) => {
-  const ws = new WebSocket("ws://localhost:8000");
+  const ws = new WebSocket(config.WS_BASE_URL);
 
   ws.onopen = () => {
     console.log("WebSocket connected");

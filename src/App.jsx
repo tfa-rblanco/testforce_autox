@@ -8,7 +8,7 @@ import TestFlowDisplay from "./components/TestFlowDisplay";
 import ExecutionResultsDisplay from "./components/ExecutionResultsDisplay";
 import InspectorControls from "./components/InspectorControls";
 import LoadingOverlay from "./components/LoadingOverlay";
-import  API_BASE_URL from "./config";
+import  config from "./config";
 const initialSteps = [];
 
 function App() {
@@ -59,7 +59,7 @@ function App() {
       setExecutionResults([]); // Clear previous results
       setLoading(true); // Show the spinner
       const res = await axios.post(
-        `${API_BASE_URL}/execute?headless=${headless}`,
+        `${config.API_BASE_URL}/execute?headless=${headless}`,
         { steps: stepsList }
       );
       setExecutionResults(res.data.results || []);
@@ -72,7 +72,7 @@ function App() {
 
   const launchInspectableBrowser = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/launch-browser`, {
+      await axios.post(`${config.API_BASE_URL}/launch-browser`, {
         url: inspectUrl,
       });
       alert("Inspectable browser launched!");
