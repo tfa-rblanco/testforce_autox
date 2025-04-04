@@ -12,12 +12,14 @@ function LoadingOverlay({ loadingText = "Executing workflow..." }) {
         height: "100vh",
         background: "rgba(0, 0, 0, 0.5)",
         display: "flex",
+        flexDirection: "column", // Arrange items vertically
         justifyContent: "center",
         alignItems: "center",
         zIndex: 9999,
       }}
     >
-      <Spin size="large" tip={loadingText} />
+      <Spin size="large" />
+      <div style={{ marginTop: 8, color: "white" }}>{loadingText}</div>
     </div>
   );
 }

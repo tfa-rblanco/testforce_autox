@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import ElementInspector from "./components/ElementInspector";
+import '@ant-design/v5-patch-for-react-19';
 
 
 import ScenarioBuilder from "./components/ScenarioBuilder";
