@@ -1,75 +1,30 @@
-import { useState, useRef } from "react";
-import TestSteps from "./components/TestSteps";
+import React, { useState } from "react";
 import axios from "axios";
 import ElementInspector from "./components/ElementInspector";
-import { saveStepsToFile, loadStepsFromFile } from "./utils/testFlowStorage";
+import '@ant-design/v5-patch-for-react-19';
+import ScenarioBuilder from "./components/ScenarioBuilder";
+import TestFlowDisplay from "./components/TestFlowDisplay";
+import ExecutionResultsDisplay from "./components/ExecutionResultsDisplay";
+import InspectorControls from "./components/InspectorControls";
 
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import config from "./config";
+import "./index.css";
+import Execution from "./components/Execution";
 
 const initialSteps = [];
 
-function SortableStep({ step, index, selectedIndex, setSelectedIndex }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: index });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    background: isDragging ? "#555" : "transparent",
-    padding: "2px",
-    borderRadius: "1px",
-    marginBottom: "1px",
-    cursor: "grab",
-  };
-
-  return (
-    <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-        <input
-          type="radio"
-          name="selectedStep"
-          value={index}
-          checked={selectedIndex === index}
-          onChange={() => setSelectedIndex(index)}
-        />
-        <span><strong>Step {index + 1}:</strong> {step.action} on {step.selector || step.url}</span>
-      </label>
-    </li>
-  );
-}
-
 function App() {
+  const [activeSection, setActiveSection] = useState("builder");
+  const [headless, setHeadless] = useState(false);
   const [stepsList, setStepsList] = useState(initialSteps);
   const [executionResults, setExecutionResults] = useState([]);
-  const [showInspector, setShowInspector] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [prefillData, setPrefillData] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [inspectUrl, setInspectUrl] = useState("");
-  const fileInputRef = useRef();
-
-  const sensors = useSensors(
-    useSensor(PointerSensor)
-  );
+  const [loading, setLoading] = useState(false);
+  const [showInspector, setShowInspector] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function addOrUpdateStep(step) {
     const updatedSteps = [...stepsList];
@@ -83,7 +38,7 @@ function App() {
     setPrefillData(null);
     setExecutionResults([]);
     setSelectedIndex(null);
-  }
+  };
 
   function deleteSelectedStep() {
     if (selectedIndex !== null) {
@@ -93,28 +48,34 @@ function App() {
       setExecutionResults([]);
       setSelectedIndex(null);
     }
-  }
+  };
 
   function editSelectedStep() {
     if (selectedIndex !== null) {
       setEditingIndex(selectedIndex);
       setPrefillData(stepsList[selectedIndex]);
     }
-  }
+  };
 
   const executeWorkflow = async () => {
     try {
-      const res = await axios.post("http://localhost:3000/execute", { steps: stepsList });
+      setExecutionResults([]);
+      setLoading(true);
+      const res = await axios.post(
+        `${config.API_BASE_URL}/execute?headless=${headless}`,
+        { steps: stepsList }
+      );
       setExecutionResults(res.data.results || []);
-      alert("Workflow executed!");
     } catch (error) {
       console.error("Execution failed:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const launchInspectableBrowser = async () => {
     try {
-      await axios.post("http://localhost:3000/launch-browser", {
+      await axios.post(`${config.API_BASE_URL}/launch-browser`, {
         url: inspectUrl,
       });
       alert("Inspectable browser launched!");
@@ -127,104 +88,97 @@ function App() {
     setShowInspector((prev) => !prev);
   };
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = active.id;
-      const newIndex = over.id;
-      setStepsList((steps) => arrayMove(steps, oldIndex, newIndex));
+  const handleHeadLessCheckboxChange = (event) => {
+    setHeadless(event.target.checked);
+  };
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case "Inspector":
+        return (
+          <>
+            <InspectorControls
+              inspectUrl={inspectUrl}
+              setInspectUrl={setInspectUrl}
+              launchInspectableBrowser={launchInspectableBrowser}
+              showInspector={showInspector}
+              toggleInspector={() => setShowInspector(!showInspector)}
+            />
+            {showInspector && <ElementInspector />}
+          </>
+        );
+      case "Builder":
+        return (
+          <>
+            <ScenarioBuilder
+              headless={headless}
+              handleHeadLessCheckboxChange={handleHeadLessCheckboxChange}
+              executeWorkflow={executeWorkflow}
+              onAddStep={addOrUpdateStep}
+              prefill={prefillData}
+              isEditing={editingIndex !== null}
+            />
+            
+            {stepsList.length > 0 && (
+              <TestFlowDisplay
+                stepsList={stepsList}
+                setStepsList={setStepsList}
+                setExecutionResults={setExecutionResults}
+                selectedIndex={selectedIndex}
+                setSelectedIndex={setSelectedIndex}
+                editSelectedStep={editSelectedStep}
+                deleteSelectedStep={deleteSelectedStep}
+              />
+            )}
+          </>
+        );
+      case "Execution":
+        <Execution />
+      case "Test Result":
+        return executionResults.length > 0 ? (
+          <ExecutionResultsDisplay executionResults={executionResults} />
+        ) : (
+          <p>No results to display yet.</p>
+        );
+      case "Test Data Management":
+        return <p>Test Management Coming Soon!</p>;
+      default:
+        return null;
     }
   };
 
   return (
-    <>
-      <div id="scenario-builder">
-        <h2>Testing Scenario Builder</h2>
-        <TestSteps
-          onAddStep={addOrUpdateStep}
-          prefill={prefillData}
-          isEditing={editingIndex !== null}
-        />
-        <button className="bottom-button" onClick={executeWorkflow}>Execute</button>
-      </div>
+    <div className="container">
+      <header className="navbar">
+        <div className="logo">TestForce</div>
 
-      {stepsList.length > 0 && (
-        <div id="scenario-builder">
-          <h3>Test Execution Flow</h3>
-
-          <div style={{ marginBottom: "10px" }}>
-            <button onClick={() => saveStepsToFile(stepsList)} style={{ marginLeft: "10px" }}>Save Steps</button>
-            <button onClick={() => fileInputRef.current.click()} style={{ marginLeft: "10px" }}>Load Steps</button>
-            <button onClick={editSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: "10px" }}>Edit</button>
-            <button onClick={deleteSelectedStep} disabled={selectedIndex === null} style={{ marginLeft: "10px" }}>Delete</button>
-          </div>
-
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={stepsList.map((_, i) => i)} strategy={verticalListSortingStrategy}>
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {stepsList.map((step, index) => (
-                  <SortableStep
-                    key={index}
-                    index={index}
-                    step={step}
-                    selectedIndex={selectedIndex}
-                    setSelectedIndex={setSelectedIndex}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-
-          <input
-            type="file"
-            accept=".json"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={(e) => loadStepsFromFile(e, setStepsList, setExecutionResults)}
-          />
+        <div className="burger" onClick={() => setMenuOpen(!menuOpen)}>
+          {menuOpen ? "✕" : "☰"}
         </div>
-      )}
 
-      {executionResults.length > 0 && (
-        <div id="scenario-builder">
-          <h3>Execution Results</h3>
-          <ul>
-            {executionResults.map((res, idx) => (
-              <li key={idx} style={{ color: res.status === "passed" ? "green" : "red", marginBottom: "8px" }}>
-                <strong>Step {idx + 1}:</strong> {res.action} on {res.selector || res.url} - <em>{res.status}</em>
-                {res.message && (
-                  <div style={{ color: "gray", fontSize: "0.9em" }}>
-                    ⚠️ <i>{res.message}</i>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
+          <a href="#services">Services</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </nav>
+    </header>
 
-      <div id="scenario-builder">
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="inspect-url" style={{ marginRight: "8px" }}>
-            URL to inspect:
-          </label>
-          <input
-            id="inspect-url"
-            value={inspectUrl}
-            onChange={(e) => setInspectUrl(e.target.value)}
-            placeholder="https://example.com"
-            style={{ marginRight: "8px", padding: "6px", width: "300px" }}
-          />
-          <button onClick={launchInspectableBrowser} style={{ marginLeft: "10px" }}>Launch</button>
-          <button onClick={toggleInspector} style={{ marginLeft: "10px" }}>
-            {showInspector ? "Hide Inspector" : "Show Inspector"}
+      <nav className="chevron-nav">
+        {["Inspector", "Builder", "Execution", "Test Result", "Test Data Management"].map((section) => (
+          <button
+            key={section}
+            className={`chevron-button ${
+              activeSection === section ? "active" : ""
+            }`}
+            onClick={() => setActiveSection(section)}
+          >
+            {section.charAt(0).toUpperCase() + section.slice(1)}
           </button>
-        </div>
-
-        {showInspector && <ElementInspector />}
-      </div>
-    </>
+        ))}
+      </nav>
+      <main className="chevron-section">{renderSection()}</main>
+    </div>
   );
-}
+};
 
 export default App;

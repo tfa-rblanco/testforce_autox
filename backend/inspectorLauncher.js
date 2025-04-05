@@ -10,23 +10,32 @@ export async function launchInspectableBrowser(url = 'https://example.com') {
     const ws = new WebSocket('ws://localhost:8000');
 
     ws.onopen = () => {
-      document.body.addEventListener('click', (e) => {
-        const el = e.target;
-        const attrs = {
-          tag: el.tagName.toLowerCase(),
-          text: el.innerText || el.textContent,
-          id: el.id,
-          class: el.className,
-          name: el.getAttribute('name'),
-          alt: el.getAttribute('alt'),
-          title: el.getAttribute('title'),
-          role: el.getAttribute('role'),
-          placeholder: el.getAttribute('placeholder'),
-          label: el.getAttribute('aria-label'),
-          testid: el.getAttribute('data-testid'),
-        };
-        ws.send(JSON.stringify(attrs));
-      });
+      const addClickListener = () => {
+        if (!document.body) return; // Ensure document.body exists
+        document.body.addEventListener('click', (e) => {
+          const el = e.target;
+          const attrs = {
+            tag: el.tagName.toLowerCase(),
+            text: el.innerText || el.textContent,
+            id: el.id,
+            class: el.className,
+            name: el.getAttribute('name'),
+            alt: el.getAttribute('alt'),
+            title: el.getAttribute('title'),
+            role: el.getAttribute('role'),
+            placeholder: el.getAttribute('placeholder'),
+            label: el.getAttribute('aria-label'),
+            testid: el.getAttribute('data-testid'),
+          };
+          ws.send(JSON.stringify(attrs));
+        });
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addClickListener);
+      } else {
+        addClickListener();
+      }
     };
   });
 
